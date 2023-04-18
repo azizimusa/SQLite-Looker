@@ -1,0 +1,7 @@
+<% gemmaData.forEach(rowData => { %>
+    <tr>
+        <% gemmaDataColumn.forEach(columnData => { %>
+            <td><%= rowData[columnData.name] %></td>
+        <% }); %>
+    </tr>
+<% }); %>

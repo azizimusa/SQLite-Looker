@@ -1,0 +1,8 @@
+<% wholeDB.forEach(item => { %>
+    <li class="nav-item" onclick="updatetable($(this))">
+            <a class="nav-link gemma-table" href="#" id="<%= item.name %>">
+            <span data-feather="file-text" class="align-text-bottom"></span>
+            <%= item.name %>
+        </a>
+    </li>
+<% }); %>
