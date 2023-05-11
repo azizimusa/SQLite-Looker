@@ -53,8 +53,8 @@ function initDB() {
     });
 
 
-// Execute a SELECT query to read data from a table
-    db.all('SELECT * FROM TransactionModel LIMIT 10', (err, rows) => {
+// Execute a SELECT query to read data from a table..
+    db.all('SELECT * FROM TransactionModel ORDER BY Id DESC', (err, rows) => {
       if (err) {
         console.error(err.message);
       } else {
@@ -80,7 +80,7 @@ function queryTableColumnInfo(tableInfo) {
         reject(err);
       } else {
         // gemmaData = rows;
-        console.log(rows[0]);
+        // console.log(rows[0]);
         db.close();
 
         resolve(rows);
@@ -95,13 +95,13 @@ function queryTableInfo(tableInfo) {
   return new Promise((resolve, reject) => {
     let db = new sqlite3.Database(gemmaDBDestinationPath);
 
-    db.all('SELECT * FROM ' + tableInfo + ' LIMIT 10', (err, rows) => {
+    db.all('SELECT * FROM ' + tableInfo, (err, rows) => {
       if (err) {
         console.error(err.message);
         reject(err);
       } else {
         // gemmaData = rows;
-        console.log(rows[0]);
+        // console.log(rows[0]);
         db.close();
 
         resolve(rows);
@@ -117,15 +117,40 @@ app.set('view engine', 'ejs');
 // app.use(express.static('web'));
 app.use(express.static(__dirname + '/web'));
 app.use((req, res, next) => {
-  fs.access(gemmaDBDestinationPath, fs.constants.F_OK, (err) => {
+
+  fs.stat(gemmaDBDestinationPath, (err, stats) => {
     if (err) {
-      console.log("file not exist");
+      console.error(err);
+      // return;
     } else {
-      initDB();
+
+      // Access the file size from the "stats" object
+      const fileSizeInBytes = stats.size;
+      // const fileSizeInKilobytes = fileSizeInBytes / 1024;
+      // const fileSizeInMegabytes = fileSizeInKilobytes / 1024;
+      //
+      // console.log(`File Size: ${fileSizeInBytes} bytes`);
+      // console.log(`File Size: ${fileSizeInKilobytes} KB`);
+      // console.log(`File Size: ${fileSizeInMegabytes} MB`);
+      //
+      if (fileSizeInBytes > 0) {
+        initDB();
+      }
+
     }
 
     next();
+
   });
+
+  // fs.access(gemmaDBDestinationPath, fs.constants.F_OK, (err) => {
+  //
+  //   if (next.size > 0) {
+  //     initDB();
+  //   }
+  //
+  //   next();
+  // });
 })
 // serve the homepage
 app.get('/', (req, res) => {
@@ -171,15 +196,35 @@ app.post('/copydb', (req, res) => {
   const myFile = req.files.gemmadb;
 
   const sourcePath = myFile.path;
-  fs.copyFile(sourcePath, gemmaDBDestinationPath, (err) => {
-    if (err) {
-      console.error('Error copying file:', err);
+
+  fs.unlink(gemmaDBDestinationPath, (err) => {
+    if (err && err.code !== 'ENOENT') {
+      console.error('Error deleting existing file:', err);
     } else {
-      console.log('File copied successfully.');
-      initDB();
-      res.send('File copied success');
+      console.log('Existing file deleted successfully.');
+
+      // Copy the new file to gemmaDBDestinationPath
+      fs.copyFile(sourcePath, gemmaDBDestinationPath, (err) => {
+        if (err) {
+          console.error('Error copying file:', err);
+        } else {
+          console.log('File replaced successfully.');
+          initDB();
+          res.send('File replaced success');
+        }
+      });
     }
   });
+
+  // fs.copyFile(sourcePath, gemmaDBDestinationPath, (err) => {
+  //   if (err) {
+  //     console.error('Error copying file:', err);
+  //   } else {
+  //     console.log('File copied successfully.');
+  //     initDB();
+  //     res.send('File copied success');
+  //   }
+  // });
 
 });
 
