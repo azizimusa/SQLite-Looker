@@ -69,12 +69,60 @@ function initDB() {
 
 }
 
+function queryTableColumnInfoSpecial(tableInfo, selectedColumns) {
+
+  return new Promise((resolve, reject) => {
+    let db = new sqlite3.Database(gemmaDBDestinationPath);
+
+    db.all('PRAGMA table_info (' + tableInfo + ')', (err, rows) => {
+      if (err) {
+        console.error(err.message);
+        reject(err);
+      } else {
+        db.close();
+
+        const columnList = selectedColumns.join(',');
+        const filteredData = rows.filter(row => columnList.includes(row.name));
+
+        resolve(filteredData);
+        // console.log(filteredData);
+      }
+
+    });
+  })
+
+}
+
 function queryTableColumnInfo(tableInfo) {
 
   return new Promise((resolve, reject) => {
     let db = new sqlite3.Database(gemmaDBDestinationPath);
 
     db.all('PRAGMA table_info (' + tableInfo + ')', (err, rows) => {
+      if (err) {
+        console.error(err.message);
+        reject(err);
+      } else {
+        db.close();
+        resolve(rows);
+      }
+
+    });
+  })
+
+}
+
+function queryTableInfoSpecial(tableInfo, startRow, endRow, selectedColumns) {
+
+  return new Promise((resolve, reject) => {
+    let db = new sqlite3.Database(gemmaDBDestinationPath);
+
+    // Generate the column list string
+    const columnList = selectedColumns.join(',');
+
+    console.log("Begin " + columnList);
+
+    db.all('SELECT ' + columnList + ' FROM ' + tableInfo + ' WHERE Id > ' + startRow + ' AND Id <= ' + endRow, (err, rows) => {
       if (err) {
         console.error(err.message);
         reject(err);
@@ -87,7 +135,8 @@ function queryTableColumnInfo(tableInfo) {
       }
 
     });
-  })
+
+  });
 
 }
 function queryTableInfo(tableInfo, startRow, endRow) {
@@ -190,8 +239,10 @@ app.get('/index.html', (req, res) => {
 app.get('/table/:tableName', async (req, res) => {
 
   if (req.url.includes('/table/')) {
-    const urlPath = req.url.replace("table/", "");
-    const tableName = urlPath.replace(/^\/+|\/+$/g, '');
+    // const urlPath = req.url.replace("table/", "");
+    // const tableName = urlPath.replace(/^\/+|\/+$/g, '');
+
+    const tableName = req.params.tableName;
 
     const totalRecords = await queryTableInfo(tableName);
     const gemmaData = await queryTableInfo(tableName, 0, 100);
@@ -200,12 +251,12 @@ app.get('/table/:tableName', async (req, res) => {
     res.send([gemmaData, gemmaDataColumn, totalRecords]);
 
   } else {
-    // res.send("didnt implement yet (" + req.url);
+    res.send("didnt implement yet " + req.url);
   }
 
 })
 
-app.get('/table/:tableName/:startRow/:endRow', async (req, res) => {
+app.get('/table/:tableName/:startRow/:endRow/:selectedColumns', async (req, res) => {
 
   if (req.url.includes('/table/')) {
     // const urlPath = req.url.replace("table/", "");
@@ -214,14 +265,25 @@ app.get('/table/:tableName/:startRow/:endRow', async (req, res) => {
     const tableName = req.params.tableName;
     const startRow = req.params.startRow;
     const endRow = req.params.endRow;
+    const selectedColumns = req.params.selectedColumns;
 
-    const gemmaData = await queryTableInfo(tableName, startRow, endRow);
-    const gemmaDataColumn = await queryTableColumnInfo(tableName);
+    let gemmaData;
+    let gemmaDataColumn;
+
+    if (selectedColumns !== "null") {
+      const arrayColumns = selectedColumns.split(',');
+      console.log("Fetching " + arrayColumns);
+      gemmaData = await queryTableInfoSpecial(tableName, startRow, endRow, arrayColumns);
+      gemmaDataColumn = await queryTableColumnInfoSpecial(tableName, arrayColumns);
+    } else {
+      gemmaData = await queryTableInfo(tableName, startRow, endRow);
+      gemmaDataColumn = await queryTableColumnInfo(tableName);
+    }
 
     res.send([gemmaData, gemmaDataColumn]);
 
   } else {
-    // res.send("didnt implement yet (" + req.url);
+    res.send("didnt implement yet " + req.url);
   }
 
 })

@@ -32,7 +32,6 @@
 </head>
 <body>
 
-
 <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
     <button class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center"
             id="bd-theme"
@@ -118,11 +117,13 @@
             <h8>Mine ID: <%= mineName.sitesID %></h8>
             <h5 id="tableName"><%= tableName %></h5>
 
-            <div class="col-sm-12">
-                <div id="dataContainer"></div>
-                <nav>
-                    <ul class="pagination justify-content-center" id="GemmaPaginationContainer"></ul>
-                </nav>
+            <div class="row">
+                <div class="col">
+                    <div id="dataContainer"></div>
+                    <nav>
+                        <ul class="pagination justify-content-center" id="GemmaPaginationContainer"></ul>
+                    </nav>
+                </div>
             </div>
 
             <div class="row">
@@ -148,7 +149,7 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                    <button type="button" class="btn btn-primary">Save changes</button>
+                                    <button type="button" class="btn btn-primary" id="btn-column-checker" data-bs-dismiss="modal">Save changes</button>
                                 </div>
                             </div>
                         </div>
@@ -157,7 +158,7 @@
 
             </div>
 
-            <div class="row">
+            <div class="row" style="margin-top: 20px">
 
                 <div class="col">
                     <div class="table-responsive-lg">
@@ -182,6 +183,8 @@
 
 <script>
     function updatetable(tableName) {
+
+        selectedColumns = [];
 
         const child = tableName.find('.gemma-table').attr('id');
         $('#tableName').text(child);
@@ -225,7 +228,7 @@
 
                 $.each(gemmaDataColumn, function(index, item) {
                     const li = "<li class='list-group-item'>";
-                    const input = "<input class='form-check-input me-1' type='checkbox' id="+item.name+" checked>";
+                    const input = "<input class='form-check-input me-1' type='checkbox' id="+item.name+">";
                     const label = "<label class='form-check-label' for="+item.name+">"+item.name+"</label>"
                     const liEnd = "</li>";
                     filterColumn.append(li + input + label + liEnd);
@@ -290,15 +293,22 @@
     const itemsPerPage = 100; // Number of records to display per page
     let currentPage = 1; // Current page number
     let totalRecords = 10;
+    let selectedColumns = [];
 
     function fetchRecords() {
+
+        console.log("Fetching " + selectedColumns);
+
+        if (selectedColumns.length === 0) {
+            selectedColumns = "null";
+        }
 
         // const child = tableName.find('.gemma-table').attr('id');
         const child = $('#tableName').text();
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
 
-        fetch('/table/' + child + '/' + startIndex + '/' + endIndex,{
+        fetch('/table/' + child + '/' + startIndex + '/' + endIndex + '/' + selectedColumns,{
             method: 'get',
         }).then(response => response.json())
             .then(message => {
@@ -393,6 +403,33 @@
 <!-- <script src="../web/js/chart.umd.min.js" integrity="sha384-gdQErvCNWvHQZj6XZM0dNsAoY4v+j5P1XDpNkcM3HJG1Yx04ecqIHk7+4VBOCHOG" crossorigin="anonymous"></script> -->
 <!--<script src="js/dashboard.js"></script>-->
 <script src="jquery/dist/jquery.min.js"></script>
+<script>
+    // Assuming you have jQuery library included in your HTML
 
+    $(document).ready(function() {
+        // When the "Save changes" button is clicked
+        $("#btn-column-checker").on("click", function() {
+            const uncheckedElements = [];
+
+            // Iterate over each checkbox inside the modal body
+            $("#filterColumn input[type='checkbox']").each(function() {
+                // Check if the checkbox is unchecked
+                if ($(this).prop("checked")) {
+                    // Get the ID of the unchecked element
+                    const uncheckedId = $(this).attr("id");
+                    uncheckedElements.push(uncheckedId);
+                }
+            });
+
+            selectedColumns = uncheckedElements;
+            // Print the unchecked element IDs to the console
+            console.log("here babeh");
+            console.log(selectedColumns);
+
+            fetchRecords(selectedColumns);
+        });
+    });
+
+</script>
 </body>
 </html>
