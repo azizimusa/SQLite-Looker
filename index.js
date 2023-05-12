@@ -25,7 +25,8 @@ function initDB() {
     db.all('SELECT * FROM sqlite_sequence ORDER BY name ASC', [], (err, rows) => {
 
       if (err) {
-        throw err;
+        // throw err;
+        console.log(err.message);
       } else {
         wholeDB = rows;
       }
@@ -34,7 +35,8 @@ function initDB() {
 
     db.all('SELECT * FROM SitesModel LIMIT 1', [], (err, rows) => {
       if (err) {
-        throw err;
+        // throw err;
+        console.log(err.message);
       } else {
         mineName = rows[0];
       }
@@ -225,8 +227,6 @@ app.get('/', (req, res) => {
 
   let gemmaData = [];
   let gemmaDataColumn = [];
-  // let mineName = [];
-  // let wholeDB = [];
   let tableName = "";
 
   res.render('index', { wholeDB, gemmaDataColumn, gemmaData, mineName, tableName });
@@ -318,6 +318,7 @@ app.post('/copydb', (req, res) => {
           console.error('Error copying file:', err);
         } else {
           console.log('File replaced successfully.');
+          mineName = [];
           initDB();
           res.send('File replaced success');
         }
