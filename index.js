@@ -54,7 +54,7 @@ function initDB() {
 
 
 // Execute a SELECT query to read data from a table..
-    db.all('SELECT * FROM TransactionModel ORDER BY Id DESC', (err, rows) => {
+    db.all('SELECT * FROM TransactionModel ORDER BY Id DESC LIMIT 10', (err, rows) => {
       if (err) {
         console.error(err.message);
       } else {
@@ -90,25 +90,44 @@ function queryTableColumnInfo(tableInfo) {
   })
 
 }
-function queryTableInfo(tableInfo) {
+function queryTableInfo(tableInfo, startRow, endRow) {
 
   return new Promise((resolve, reject) => {
     let db = new sqlite3.Database(gemmaDBDestinationPath);
 
-    db.all('SELECT * FROM ' + tableInfo, (err, rows) => {
-      if (err) {
-        console.error(err.message);
-        reject(err);
-      } else {
-        // gemmaData = rows;
-        // console.log(rows[0]);
-        db.close();
+    if (startRow == null) {
+      db.all('SELECT * FROM ' + tableInfo, (err, rows) => {
+        if (err) {
+          console.error(err.message);
+          reject(err);
+        } else {
+          // gemmaData = rows;
+          // console.log(rows[0]);
+          db.close();
 
-        resolve(rows);
-      }
+          resolve(rows);
+        }
 
-    });
-  })
+      });
+    } else {
+
+      db.all('SELECT * FROM ' + tableInfo + ' WHERE Id > ' + startRow + ' AND Id <= ' + endRow, (err, rows) => {
+        if (err) {
+          console.error(err.message);
+          reject(err);
+        } else {
+          // gemmaData = rows;
+          // console.log(rows[0]);
+          db.close();
+
+          resolve(rows);
+        }
+
+      });
+
+    }
+
+  });
 
 }
 
@@ -155,6 +174,12 @@ app.use((req, res, next) => {
 // serve the homepage
 app.get('/', (req, res) => {
 
+  let gemmaData = [];
+  let gemmaDataColumn = [];
+  // let mineName = [];
+  // let wholeDB = [];
+  let tableName = "";
+
   res.render('index', { wholeDB, gemmaDataColumn, gemmaData, mineName, tableName });
 });
 
@@ -168,7 +193,29 @@ app.get('/table/:tableName', async (req, res) => {
     const urlPath = req.url.replace("table/", "");
     const tableName = urlPath.replace(/^\/+|\/+$/g, '');
 
-    const gemmaData = await queryTableInfo(tableName);
+    const totalRecords = await queryTableInfo(tableName);
+    const gemmaData = await queryTableInfo(tableName, 0, 100);
+    const gemmaDataColumn = await queryTableColumnInfo(tableName);
+
+    res.send([gemmaData, gemmaDataColumn, totalRecords]);
+
+  } else {
+    // res.send("didnt implement yet (" + req.url);
+  }
+
+})
+
+app.get('/table/:tableName/:startRow/:endRow', async (req, res) => {
+
+  if (req.url.includes('/table/')) {
+    // const urlPath = req.url.replace("table/", "");
+    // const tableName = urlPath.replace(/^\/+|\/+$/g, '');
+
+    const tableName = req.params.tableName;
+    const startRow = req.params.startRow;
+    const endRow = req.params.endRow;
+
+    const gemmaData = await queryTableInfo(tableName, startRow, endRow);
     const gemmaDataColumn = await queryTableColumnInfo(tableName);
 
     res.send([gemmaData, gemmaDataColumn]);

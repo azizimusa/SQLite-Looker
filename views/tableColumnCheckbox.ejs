@@ -1,0 +1,11 @@
+<!--<li class="list-group-item">-->
+<!--    <input class="form-check-input me-1" type="checkbox" value="" id="firstCheckbox">-->
+<!--    <label class="form-check-label" for="firstCheckbox">First checkbox</label>-->
+<!--</li>-->
+
+<% gemmaDataColumn.forEach(item => { %>
+    <li class="list-group-item">
+        <input class="form-check-input me-1" type="checkbox" value="" id="<%= item.name %>">
+        <label class="form-check-label" for="<%= item.name %>"><%= item.name %></label>
+    </li>
+<% }); %>

@@ -76,7 +76,7 @@
     </button>
     <div class="navbar-nav">
         <div class="nav-item text-nowrap">
-            <a class="nav-link px-3" href="#">Sign out</a>
+<!--            <a class="nav-link px-3" href="#">Sign out</a>-->
         </div>
     </div>
 </header>
@@ -117,17 +117,63 @@
             <h2><%= mineName.name %></h2>
             <h8>Mine ID: <%= mineName.sitesID %></h8>
             <h5 id="tableName"><%= tableName %></h5>
-            <div class="table-responsive-lg">
-                <table class="table table-hover table-lg">
-                    <thead class="table-light">
-                        <tr id="tableColumn">
-                            <%- include('tableColumn'); %>
-                        </tr>
-                    </thead>
-                    <tbody id="tableData">
-                        <%- include('table'); %>
-                    </tbody>
-                </table>
+
+            <div class="col-sm-12">
+                <div id="dataContainer"></div>
+                <nav>
+                    <ul class="pagination justify-content-center" id="GemmaPaginationContainer"></ul>
+                </nav>
+            </div>
+
+            <div class="row">
+
+                <div class="col">
+                    <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        Filter Column
+                    </button>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="exampleModalLabel">Select To Filter Column Visible</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <ul class="list-group" id="filterColumn">
+                                        <%- include('tableColumnCheckbox'); %>
+                                    </ul>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-primary">Save changes</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col">
+                    <div class="table-responsive-lg">
+                        <table class="table table-hover table-lg">
+                            <thead class="table-light">
+                            <tr id="tableColumn">
+                                <%- include('tableColumn'); %>
+                            </tr>
+                            </thead>
+                            <tbody id="tableData">
+                            <%- include('table'); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
 
         </main>
@@ -147,6 +193,10 @@
 
                 const gemmaData = message[0];
                 const gemmaDataColumn = message[1];
+                const totalRecords = message[2];
+
+                displayData();
+                generatePagination(totalRecords.length);
 
                 const tableColumn = $('#tableColumn');
                 tableColumn.empty();
@@ -168,6 +218,17 @@
                         table.append(trData);
                     })
 
+                })
+
+                const filterColumn = $('#filterColumn');
+                filterColumn.empty();
+
+                $.each(gemmaDataColumn, function(index, item) {
+                    const li = "<li class='list-group-item'>";
+                    const input = "<input class='form-check-input me-1' type='checkbox' id="+item.name+" checked>";
+                    const label = "<label class='form-check-label' for="+item.name+">"+item.name+"</label>"
+                    const liEnd = "</li>";
+                    filterColumn.append(li + input + label + liEnd);
                 })
 
             })
@@ -221,6 +282,109 @@
     function invokeFilePicker() {
         document.getElementById('importFile').click();
     }
+
+</script>
+
+<script>
+
+    const itemsPerPage = 100; // Number of records to display per page
+    let currentPage = 1; // Current page number
+    let totalRecords = 10;
+
+    function fetchRecords() {
+
+        // const child = tableName.find('.gemma-table').attr('id');
+        const child = $('#tableName').text();
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+
+        fetch('/table/' + child + '/' + startIndex + '/' + endIndex,{
+            method: 'get',
+        }).then(response => response.json())
+            .then(message => {
+
+                const gemmaData = message[0];
+                const gemmaDataColumn = message[1];
+
+                totalRecords = gemmaData.size;
+
+                const tableColumn = $('#tableColumn');
+                tableColumn.empty();
+
+                $.each(gemmaDataColumn, function(index, item) {
+                    const th = "<th scope='col'>"+item.name+"</th>";
+                    tableColumn.append(th);
+                })
+
+                const table = $('#tableData');
+                table.empty();
+
+                $.each(gemmaData, function(index, rowData) {
+                    const tr = $("<tr>");
+                    table.append(tr);
+
+                    $.each(gemmaDataColumn, function(index, columnData) {
+                        const trData = $("<td>"+rowData[columnData.name]+"</td>");
+                        table.append(trData);
+                    })
+
+                })
+
+            })
+            .catch(error => {
+                console.error(error);
+            })
+    }
+
+    // Function to display data based on the current page
+    function displayData() {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        // const currentPageData = malaysianFirstNames.slice(startIndex, endIndex);
+
+        const dataContainer = document.getElementById('dataContainer');
+        dataContainer.innerHTML = '';
+
+        // currentPageData.forEach((record) => {
+        //     // Create and append HTML elements to display the record data
+        //     const recordElement = document.createElement('div');
+        //     recordElement.textContent = record;
+        //     dataContainer.appendChild(recordElement);
+        // });
+    }
+
+    // Function to generate pagination links
+    function generatePagination(totalPage) {
+        const totalPages = Math.ceil(totalPage / itemsPerPage);
+        const paginationContainer = document.getElementById('GemmaPaginationContainer');
+        paginationContainer.innerHTML = '';
+
+        for (let i = 1; i <= totalPages; i++) {
+            const li = document.createElement('li');
+            li.classList.add('page-item');
+            const link = document.createElement('a');
+            link.classList.add('page-link');
+            link.href = '#';
+            link.textContent = i;
+            li.appendChild(link);
+            paginationContainer.appendChild(li);
+        }
+
+        // Add event listener to pagination links
+        paginationContainer.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (event.target.tagName === 'A') {
+                currentPage = parseInt(event.target.textContent);
+                fetchRecords();
+                // displayData();
+            }
+        });
+    }
+
+    // Initial display
+    // displayData();
+    // generatePagination(10);
+
 
 </script>
 
