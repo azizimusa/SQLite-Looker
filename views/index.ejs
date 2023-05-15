@@ -3,6 +3,10 @@
 <html lang="en" data-bs-theme="auto">
 <head>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=family=Ubuntu:wght@700&display=swap" rel="stylesheet">
+
     <script src="js/color-modes.js"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,9 +16,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline';">
 
     <title>GEMMA Looker</title>
-
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/dashboard/">
-
     <link href="bootstrap/css/bootstrap.min.css" type="text/css" rel="stylesheet">
 
     <!-- Favicons -->
@@ -30,7 +32,7 @@
     <!-- Custom styles for this template -->
     <link href="css/dashboard.css" type="text/css" rel="stylesheet">
 </head>
-<body>
+<body class="bg-body-tertiary">
 
 <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
     <button class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center"
@@ -82,7 +84,7 @@
 
 <div class="container-fluid">
     <div class="row">
-        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-body-tertiary sidebar collapse">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-3 d-md-block bg-body-tertiary sidebar collapse">
             <div class="position-sticky pt-3 sidebar-sticky">
                 <ul class="nav flex-column">
                     <li class="nav-item">
@@ -102,7 +104,7 @@
             </div>
         </nav>
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+        <main class="col-md-9 ms-sm-auto col-lg-9 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">Dashboard</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
@@ -161,15 +163,15 @@
             <div class="row" style="margin-top: 20px">
 
                 <div class="col">
-                    <div class="table-responsive-lg">
-                        <table class="table table-striped table-lg">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
                             <thead class="table-light">
                             <tr id="tableColumn">
                                 <%- include('tableColumn'); %>
                             </tr>
                             </thead>
                             <tbody id="tableData">
-                            <%- include('table'); %>
+                                <%- include('table'); %>
                             </tbody>
                         </table>
                     </div>
@@ -212,14 +214,27 @@
                 const table = $('#tableData');
                 table.empty();
 
+                // let kambing;
+
                 $.each(gemmaData, function(index, rowData) {
                     const tr = $("<tr>");
                     table.append(tr);
 
                     $.each(gemmaDataColumn, function(index, columnData) {
+
+                        // if (index == 0) {
+                        //     const trData = $("<th scope='row'>"+rowData[columnData.name]+"</th>");
+                        //     tr.append(trData);
+                        // } else {
+                        //     const trData = $("<td>"+rowData[columnData.name]+"</td>");
+                        //     tr.append(trData);
+                        // }
+
                         const trData = $("<td>"+rowData[columnData.name]+"</td>");
-                        table.append(trData);
+                        tr.append(trData);
+
                     })
+                    table.append(tr);
 
                 })
 
